@@ -1,10 +1,14 @@
-# src/infrastructure/database/oracle_db.py
-
+from dotenv import load_dotenv
+import os
 import oracledb
 
+load_dotenv()
+
 def get_database_connection():
-    dsn = oracledb.makedsn("orion.javeriana.edu.co", 1521, service_name="LAB")
-    return oracledb.connect(user="is819901", password="d5MryKS66PIkkDh", dsn=dsn)
+    # Utiliza las variables de entorno cargadas
+    dsn = oracledb.makedsn(os.getenv('DB_HOST'), os.getenv('DB_PORT'), service_name=os.getenv('DB_SERVICE_NAME'))
+    return oracledb.connect(user=os.getenv('DB_USER'), password=os.getenv('DB_PASSWORD'), dsn=dsn)
+
 
 def initialize_database():
     try:
