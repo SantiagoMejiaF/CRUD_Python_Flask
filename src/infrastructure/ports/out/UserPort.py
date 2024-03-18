@@ -6,7 +6,7 @@ from src.domain.model.User import User
 class UserPort(ABC):
 
     @abstractmethod
-    def save_user(self, user: User):
+    def create_user(self, user: User):
         pass
 
     @abstractmethod
@@ -18,9 +18,9 @@ class UserPort(ABC):
         pass
 
     @abstractmethod
-    def find_user_by_id(self, user_id: int) -> User:
+    def get_user(self, user_id: int) -> User:
         pass
 
     @abstractmethod
-    def find_all(self) -> List[User]:
+    def get_users(self) -> List[User]:
         pass

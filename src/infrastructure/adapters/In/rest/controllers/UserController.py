@@ -1,67 +1,95 @@
-from flask import Flask, request, jsonify
+from flask import request, jsonify
+from flask.views import MethodView
 from src.application.usecases.UserUseCaseImpl import UserUseCaseImpl
 from src.domain.model.User import User
 from src.infrastructure.adapters.out.UserAdapter import UserAdapter
 
+class UserController(MethodView):
 
-app = Flask(__name__)
-user_adapter = UserAdapter()
-user_use_case = UserUseCaseImpl(user_adapter)
+    def __init__(self):
+        self.user_adapter = UserAdapter()
+        self.user_use_case = UserUseCaseImpl(self.user_adapter)
 
-
-class UserController:
-
-    @staticmethod
-    @app.route('/user', methods=['POST'])
-    def create_user():
+    def post(self):
         user_data = request.get_json()
         user = User(None, user_data['name'], user_data['email'], user_data['gender'], user_data['status'])
-        user_use_case.create_user(user)
-        return jsonify({'message': 'User created successfully'}), 201
+        user_id = self.user_use_case.create_user(user)
+        return jsonify({'message': 'User created successfully', 'id': user_id}), 201
 
-    @staticmethod
-    @app.route('/users', methods=['GET'])
-    def get_users():
-        users = user_use_case.get_users()
-        users_data = [{
-            'id': user.id,
-            'name': user.name,
-            'email': user.email,
-            'gender': user.gender,
-            'status': user.status
-        } for user in users]
-        return jsonify(users_data)
-
-    @staticmethod
-    @app.route('/user/<int:user_id>', methods=['GET'])
-    def get_user(user_id):
-        user = user_use_case.get_user(user_id)
-        if user:
-            user_data = {
+    def get(self, user_id_or_email=None):
+        if user_id_or_email is not None:
+            if user_id_or_email.isdigit():
+                # Fetch a single user by ID
+                user = self.user_use_case.get_user(int(user_id_or_email))
+                if user:
+                    user_data = {
+                        'id': user.id,
+                        'name': user.name,
+                        'email': user.email,
+                        'gender': user.gender,
+                        'status': user.status
+                    }
+                    return jsonify(user_data), 200
+                else:
+                    return jsonify({'message': 'User not found'}), 404
+            else:
+                # Fetch a single user by email
+                user = self.user_use_case.get_user_by_email(user_id_or_email)
+                if user:
+                    user_data = {
+                        'id': user.id,
+                        'name': user.name,
+                        'email': user.email,
+                        'gender': user.gender,
+                        'status': user.status
+                    }
+                    return jsonify(user_data), 200
+                else:
+                    return jsonify({'message': 'User not found'}), 404
+        else:
+            # Fetch all users
+            users = self.user_use_case.get_users()
+            users_data = [{
                 'id': user.id,
                 'name': user.name,
                 'email': user.email,
                 'gender': user.gender,
                 'status': user.status
-            }
-            return jsonify(user_data)
-        else:
-            return jsonify({'message': 'User not found'}), 404
+            } for user in users]
+            return jsonify(users_data), 200
 
-    @staticmethod
-    @app.route('/user/<int:user_id>', methods=['PUT'])
-    def update_user(user_id):
+    def put(self, user_id_or_email):
         user_data = request.get_json()
-        user = User(user_id, user_data['name'], user_data['email'], user_data['gender'], user_data['status'])
-        user_use_case.update_user(user_id, user)
+
+        if 'name' in user_data:
+            user_name = user_data['name']
+        else:
+            user_name = None
+
+        if user_id_or_email.isdigit():
+            user_id = int(user_id_or_email)
+            user_email = None
+        else:
+            user_id = None
+            user_email = user_id_or_email
+
+        user_gender = user_data.get('gender')
+        user_status = user_data.get('status')
+
+        if user_id is not None:
+            user = User(user_id, user_name, user_email, user_gender, user_status)
+            self.user_use_case.update_user(user_id, user)
+        elif user_email is not None:
+            user = User(None, user_name, user_email, user_gender, user_status)
+            self.user_use_case.update_user_by_email(user_email, user)
+
         return jsonify({'message': 'User updated successfully'}), 200
 
-    @staticmethod
-    @app.route('/user/<int:user_id>', methods=['DELETE'])
-    def delete_user(user_id):
-        user_use_case.delete_user(user_id)
-        return jsonify({'message': 'User deleted successfully'})
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=4000)
+    def delete(self, user_id_or_email):
+        if user_id_or_email.isdigit():
+            self.user_use_case.delete_user(int(user_id_or_email))
+        else:
+            self.user_use_case.delete_user_by_email(user_id_or_email)
+        return jsonify({'message': 'User deleted successfully'}), 204

@@ -3,21 +3,47 @@ from src.infrastructure.ports.In.UserUseCase import UserUseCase
 from src.infrastructure.ports.out import UserPort
 
 
-class UserUseCaseImpl(UserUseCase):
-    def __init__(self, user_port: UserPort):
-        self.user_port = user_port
+class UserUseCaseImpl:
 
-    def create_user(self, user: User) -> User:
-        return self.user_port.save_user(user)
+    def __init__(self, user_adapter: UserPort):
+        self.user_adapter = user_adapter
 
-    def update_user(self, user_id: int, user: User) -> User:
-        return self.user_port.update_user(user_id, user)
+    def create_user(self, user):
+        self.user_adapter.create_user(user)
 
-    def delete_user(self, user_id: int) -> None:
-        return self.user_port.delete_user(user_id)
+    def get_users(self):
+        return self.user_adapter.get_users()
 
-    def get_user(self, user_id: int) -> User:
-        return self.user_port.find_user_by_id(user_id)
+    def get_user(self, identifier):
+        return self.user_adapter.get_user(identifier)
 
-    def get_users(self) -> list:
-        return self.user_port.find_all()
+    def get_user_by_email(self, email):
+        return self.user_adapter.get_user_by_email(email)
+
+    def update_user(self, identifier, user):
+        existing_user = self.user_adapter.get_user(identifier)
+        if existing_user:
+            self.user_adapter.update_user(identifier, user)
+        else:
+            raise ValueError("User not found")
+
+    def update_user_by_email(self, email, user):
+        existing_user = self.user_adapter.get_user_by_email(email)
+        if existing_user:
+            self.user_adapter.update_user_by_email(email, user)
+        else:
+            raise ValueError("User not found")
+
+    def delete_user(self, identifier):
+        existing_user = self.user_adapter.get_user(identifier)
+        if existing_user:
+            self.user_adapter.delete_user(identifier)
+        else:
+            raise ValueError("User not found")
+
+    def delete_user_by_email(self, email):
+        existing_user = self.user_adapter.get_user_by_email(email)
+        if existing_user:
+            self.user_adapter.delete_user_by_email(email)
+        else:
+            raise ValueError("User not found")
