@@ -5,7 +5,6 @@ import oracledb
 load_dotenv()
 
 def get_database_connection():
-    # Utiliza las variables de entorno cargadas
     dsn = oracledb.makedsn(os.getenv('DB_HOST'), os.getenv('DB_PORT'), service_name=os.getenv('DB_SERVICE_NAME'))
     return oracledb.connect(user=os.getenv('DB_USER'), password=os.getenv('DB_PASSWORD'), dsn=dsn)
 
